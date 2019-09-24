@@ -18,5 +18,6 @@ ReactDOM.render(React.createElement('div', null,
         frameworkName:'Backbone.js',
         title: 'Backbone framework'
     }),
-    React.createElement(DateAndTime, null)), 
+    React.createElement(DateAndTime, null), 
+    React.createElement(Content, null)),
     document.getElementById('content'))
