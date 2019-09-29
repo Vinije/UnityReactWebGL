@@ -10,6 +10,10 @@
             border: 5px dotted blue;
         }
     </style>
+
+<link rel="stylesheet" href="common/lib/normalize.css">
+
+    <script src="common/lib/gl-matrix.js"></script>
     <script src="js/utils.js"></script>
 
     <!-- vertex Shader -->
@@ -17,12 +21,16 @@
         #version 300 es
         precision mediump float;
 
+        uniform mat4 uMVMatrix;
+        uniform mat4 uProjMatrix;
+
         // Supplied vertex position attribute
         in vec3 aVertexPosition;
 
         void main(void) {
-        // Set the position in clipspace coordinates
-        gl_Position = vec4(aVertexPosition, 1.0);
+            // Set the position in clipspace coordinates
+            gl_Position = uProjMatrix * uMVMatrix * vec4(aVertexPosition, 1.0);
+            //gl_Position = vec4(aVertexPosition,1.0);
         }
     </script>
 
@@ -34,9 +42,11 @@
         // Color that is the result of this shader
         out vec4 fragColor;
 
+        uniform vec3 uModelColor;
+
         void main(void) {
-        // Set the result as red
-        fragColor = vec4(0.5, 0.5, 0.5, 0.7);
+            // Set the result as red
+            fragColor = vec4(1,1,1, 1.0);
         }
     </script>
 
