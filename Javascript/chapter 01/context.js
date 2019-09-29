@@ -55,6 +55,8 @@ function init()
     //gl.clearColor(0.0,0.0,0.0,1);
     alert(message);
 
+    
+
     window.onkeydown = checkKey;
 }
 

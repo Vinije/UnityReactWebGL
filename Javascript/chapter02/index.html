@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>Javascript learning</title>
+    <style type="text/css">
+        canvas{
+            border: 5px dotted blue;
+        }
+    </style>
+    <script src="js/utils.js"></script>
+
+    <!-- vertex Shader -->
+    <script id="vertex-shader" type="vertex-shader">
+        #version 300 es
+        precision mediump float;
+
+        // Supplied vertex position attribute
+        in vec3 aVertexPosition;
+
+        void main(void) {
+        // Set the position in clipspace coordinates
+        gl_Position = vec4(aVertexPosition, 1.0);
+        }
+    </script>
+
+    <!-- fragment Shader -->
+    <script id="fragment-shader" type="fragment-shader">
+        #version 300 es
+        precision mediump float;
+
+        // Color that is the result of this shader
+        out vec4 fragColor;
+
+        void main(void) {
+        // Set the result as red
+        fragColor = vec4(0.5, 0.5, 0.5, 0.7);
+        }
+    </script>
+
+    <script src="js/context.js"></script>
+</head>
+<body>
+    <h1>Hello World</h1>
+    <canvas id="webgl-canvas" width="400" height="400">
+        Your browser does not support WebGL
+    </canvas>
+</body>
+</html>
