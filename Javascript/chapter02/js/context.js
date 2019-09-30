@@ -5,10 +5,13 @@ let model, coneVAO,
 modelMatrix = mat4.create(),
 projMatrix = mat4.create(),
 parts = [],
-lightDiffuseColor = [1, 1, 1],
-lightDirection = [0, -1, -1],
-normalMatrix = mat4.create();
-
+lightDiffuseColor = [1, 1, 0],
+lightDirection = [1, -1, -1],
+materialDiffuse = [0.5, 0.5, 0.5],
+normalMatrix = mat4.create(),
+normals = [],
+azimuth = 0,
+elevation = 0;
 
 function updateClearColor(...color){
     gl.clearColor(...color);
@@ -86,7 +89,6 @@ function initProgram(){
 
     gl.linkProgram(program);
 
-
     if (!gl.getProgramParameter(program, gl.LINK_STATUS)) {
         console.error('Could not initialize shaders');
     }
@@ -104,6 +106,7 @@ function initProgram(){
     program.uNormalMatrix = gl.getUniformLocation(program, 'uNormalMatrix');
     program.uLightDirection = gl.getUniformLocation(program, 'uLightDirection');
     program.uLightDiffuse = gl.getUniformLocation(program, 'uLightDiffuse');
+    program.uMaterialDiffuse = gl.getUniformLocation(program, 'uMaterialDiffuse');
 
 }
 
@@ -149,7 +152,7 @@ function initBuffers(){
 function loadMoreParts(filePath){
 
     for (let i = 1; i < 179; i++) {
-        console.log(`${filePath}/part${i}.json`);
+        
         fetch(`${filePath}/part${i}.json`)
         .then(res => res.json())
         .then(data => {
@@ -168,6 +171,16 @@ function loadMoreParts(filePath){
           // Configure instructions
           gl.enableVertexAttribArray(program.aVertexPosition);
           gl.vertexAttribPointer(program.aVertexPosition, 3, gl.FLOAT, false, 0, 0);
+        
+          //VBO normals
+          //calculate normals
+          normals = utils.calculateNormals(data.vertices, data.indices);
+          const normalsBuffer = gl.createBuffer();
+          gl.bindBuffer(gl.ARRAY_BUFFER, normalsBuffer);
+          gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(normals), gl.STATIC_DRAW);
+
+          gl.enableVertexAttribArray(program.aVertexNormal);
+          gl.vertexAttribPointer(program.aVertexNormal, 3, gl.FLOAT, false, 0,0);
 
           // IBO
           const indexBufferObject = gl.createBuffer();
@@ -265,14 +278,14 @@ function drawParts(){
     //set matrices
     mat4.perspective(projMatrix, 45, gl.canvas.width / gl.canvas.height, 10, 10000);
     mat4.identity(modelMatrix);
+
     mat4.translate(modelMatrix, modelMatrix, [-10, 0, -100]);
     mat4.rotate(modelMatrix, modelMatrix, 30 * Math.PI / 180, [1, 0, 0]);
-    mat4.rotate(modelMatrix, modelMatrix, 30 * Math.PI / 180, [0, 1, 0]);
-
+    mat4.rotate(modelMatrix, modelMatrix, 135 * Math.PI / 180, [0, 1, 0]);
 
     mat4.copy(normalMatrix, modelMatrix);
     mat4.invert(normalMatrix, normalMatrix);
-    mat4.transpose(normalMatrix, normalMatrix);
+    mat4.transpose(normalMatrix, normalMatrix);    
 
     gl.uniformMatrix4fv(program.uProjMatrix, false, projMatrix);
     gl.uniformMatrix4fv(program.uMVMatrix, false, modelMatrix);
@@ -285,7 +298,7 @@ function drawParts(){
         gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, part.ibo);
 
         // Draw
-        gl.drawElements(gl.LINES, part.indices.length, gl.UNSIGNED_SHORT, 0);
+        gl.drawElements(gl.TRIANGLES, part.indices.length, gl.UNSIGNED_SHORT, 0);
 
         // Clean
         gl.bindVertexArray(null);
@@ -302,7 +315,49 @@ function render(){
 function initLights(){
     gl.uniform3fv(program.uLightDirection, lightDirection);
     gl.uniform3fv(program.uLightDiffuse, lightDiffuseColor);
+    gl.uniform3fv(program.uMaterialDiffuse, materialDiffuse);
 }
+
+function processKey(ev) {
+    const lightDirection = gl.getUniform(program, program.uLightDirection);
+    const incrementValue = 10;
+  
+    switch (ev.keyCode) {
+      // left arrow
+      case 37: {
+        azimuth -= incrementValue;
+        break;
+      }
+      // up arrow
+      case 38: {
+        elevation += incrementValue;
+        break;
+      }
+      // right arrow
+      case 39: {
+        azimuth += incrementValue;
+        break;
+      }
+      // down arrow
+      case 40: {
+        elevation -= incrementValue;
+        break;
+      }
+    }
+  
+    azimuth %= 360;
+    elevation %= 360;
+  
+    const theta = elevation * Math.PI / 180;
+    const phi = azimuth * Math.PI / 180;
+  
+    // Spherical to cartesian coordinate transformation
+    lightDirection[0] = Math.cos(theta) * Math.sin(phi);
+    lightDirection[1] = Math.sin(theta);
+    lightDirection[2] = Math.cos(theta) * -Math.cos(phi);
+  
+    gl.uniform3fv(program.uLightDirection, lightDirection);
+  }
 
 function init()
 {
@@ -321,11 +376,10 @@ function init()
 
     initProgram();
     loadMoreParts('common/models/nissan-gtr');
-    initNormals();
     initLights();
     render();
-    
-    window.onkeydown = checkKey;
+
+    document.onkeydown = processKey;
 }
 
 window.onload = init;

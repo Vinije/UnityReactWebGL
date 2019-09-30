@@ -21,8 +21,8 @@
     #version 300 es
     precision mediump float;
 
-    uniform mat4 uModelViewMatrix;
-    uniform mat4 uProjectionMatrix;
+    uniform mat4 uMVMatrix;
+    uniform mat4 uProjMatrix;
     uniform mat4 uNormalMatrix;
     uniform vec3 uLightDirection;
     uniform vec3 uLightDiffuse;
@@ -48,9 +48,9 @@
 
       // Set the varying to be used inside of the fragment shader
       vVertexColor = vec4(Id, 1.0);
-
+      
       // Setting the vertex position
-      gl_Position = uProjectionMatrix * uModelViewMatrix * vec4(aVertexPosition, 1.0);
+      gl_Position = uProjMatrix * uMVMatrix * vec4(aVertexPosition, 1.0);
     }
 
   </script>
@@ -69,6 +69,7 @@
     void main(void)  {
       // Simply set the value passed in from the vertex shader
       fragColor = vVertexColor;
+      //fragColor = vec4(1,1,1,1);
     }
 
   </script>
