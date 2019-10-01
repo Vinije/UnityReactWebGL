@@ -35,7 +35,7 @@
 
     void main(void) {
       // Calculate the normal vector
-      normal = normalize(vec3(uNormalMatrix * vec4(aVertexNormal, 1.0)));
+      normal = normalize(vec3(uNormalMatrix * vec4(aVertexNormal, 0.0)));
 
       vec4 vertex = uMVMatrix * vec4(aVertexPosition,1.0);
       vec4 lightp = vec4(uLightPosition,1.0);
@@ -73,24 +73,26 @@
       vec3 N = normalize(normal);
       vec3 E = normalize(eyeVector);
 
-      vec4 finalColor = vec4(0.1,0.1,0.1,1.0);
+      vec4 finalColor = vec4(0.0,0.0,0.0,1.0);
 
       float lambertTerm = dot(N, -L);
 
       if(lambertTerm>0.0){
-        finalColor += vec4(uMaterialDiffuse,1.0) * lambertTerm;
+        finalColor += vec4(uMaterialDiffuse, 1.0) * lambertTerm;
         vec3 halfDir = normalize(L+E);
 
-        float shinines = 32.0;
+        float shinines = 80.0;
         float specularAngle = max(dot(halfDir, N),0.0);
         float specular = pow(specularAngle, shinines);
 
-        finalColor += specular * vec4(1,1,1,1)*10.0;
+        finalColor += specular * vec4(1,1,1,1);
         
       }
-      float t = length(eyeVector);
-      vec4 fogColor = vec4(0.5,0.5,0.5,1.0) * exp(-t);
-      fragColor = finalColor + fogColor;
+      float t = gl_FragCoord.z/gl_FragCoord.w;
+      vec4 fogColor = vec4(0.5,0.5,0.5,1.0);
+      //float density = clamp(sin(),0.0,1.0);
+      float fogFactor =  clamp(1.0/exp(t*0.0015),0.0, 1.0);
+      fragColor = mix(fogColor, finalColor, fogFactor);
     }
 
   </script>

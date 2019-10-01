@@ -4,19 +4,27 @@ let gl, program, squareVAO, squareIndexBuffer, indices;
 let model, coneVAO, 
 modelMatrix = mat4.create(),
 projMatrix = mat4.create(),
-parts = [],
 lightDiffuseColor = [1, 1, 0],
 lightDirection = [1, -1, -1],
-lightPosition = [4.5, 3, 15],
+lightPosition = [10, 30, -120],
 materialDiffuse = [0.5, 0.5, 0.5],
 normalMatrix = mat4.create(),
 normals = [],
 azimuth = 0,
 elevation = 0;
 
+let sceneObjects = new Map();
+
+let sceneObject = {
+    name,
+    parts: []
+};
+
 function updateClearColor(...color){
     gl.clearColor(...color);
     gl.clear(gl.COLOR_BUFFER_BIT);
+    gl.enable(gl.DEPTH_TEST);
+    gl.depthFunc(gl.LEQUAL);
     gl.viewport(0,0,0,0);
     drawParts();
 }
@@ -151,14 +159,19 @@ function initBuffers(){
 
 }
 
-function loadMoreParts(filePath){
-
-    for (let i = 1; i < 179; i++) {
-        
+function loadMoreParts(filePath, count){
+    //Inicializace objektu ve scene
+    if (sceneObjects.get(filePath) == null) {
+        sceneObject.name = filePath;
+        sceneObject.parts = [];
+        sceneObjects.set(filePath, sceneObject);
+    }
+    
+    for (let i = 1; i < count; i++) {    
         fetch(`${filePath}/part${i}.json`)
         .then(res => res.json())
         .then(data => {
-
+        
           // Create a VAO
           const vao = gl.createVertexArray();
 
@@ -194,13 +207,16 @@ function loadMoreParts(filePath){
           data.ibo = indexBufferObject;
 
           // Push data onto parts array
-          parts.push(data);
-
+          if (sceneObjects.get(filePath)) {
+            sceneObjects.get(filePath).parts.push(data);    
+          }
+          
           // Clean
           gl.bindVertexArray(null);
           gl.bindBuffer(gl.ARRAY_BUFFER, null);
           gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, null);
         })
+            
         .catch(error => {console.error(error)});
     }
 }
@@ -254,7 +270,7 @@ function draw(){
     //set matrices
     mat4.perspective(projMatrix, 45.0, gl.canvas.width / gl.canvas.height, 0.1, 10000);
     mat4.identity(modelMatrix);
-    mat4.translate(modelMatrix, modelMatrix, [0,0,-5.0]);
+    mat4.translate(modelMatrix, modelMatrix, [0,0, 0.0]);
 
     gl.uniformMatrix4fv(program.uProjMatrix, false, projMatrix);
     gl.uniformMatrix4fv(program.uMVMatrix, false, modelMatrix);
@@ -271,8 +287,8 @@ function draw(){
     gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, null);
 }
 
-function drawParts(){
-
+function drawParts(time){
+    time *= 0.005;
     // Clear the scene
     gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
     gl.viewport(0, 0, gl.canvas.width, gl.canvas.height);
@@ -281,37 +297,61 @@ function drawParts(){
     mat4.perspective(projMatrix, 45, gl.canvas.width / gl.canvas.height, 10, 10000);
     mat4.identity(modelMatrix);
 
-    mat4.translate(modelMatrix, modelMatrix, [-10, 0, -100]);
-    mat4.rotate(modelMatrix, modelMatrix, 30 * Math.PI / 180, [1, 0, 0]);
-    mat4.rotate(modelMatrix, modelMatrix, 135 * Math.PI / 180, [0, 1, 0]);
+    //mat4.translate(modelMatrix, modelMatrix, [0, -15, -120]);
+    //mat4.rotate(modelMatrix, modelMatrix, 20 * Math.PI / 180, [1, 0, 0]);
+    //mat4.rotate(modelMatrix, modelMatrix,Math.sin(time*0.05)*2.0 * 45 * Math.PI / 180, [0, 1, 0]);
 
     mat4.copy(normalMatrix, modelMatrix);
     mat4.invert(normalMatrix, normalMatrix);
     mat4.transpose(normalMatrix, normalMatrix);    
 
+    let newLightPos = [lightPosition[0], lightPosition[1] + Math.sin(time*0.5)*5.0, lightPosition[2]];
+    gl.uniform3fv(program.uLightPosition, newLightPos);
+
     gl.uniformMatrix4fv(program.uProjMatrix, false, projMatrix);
     gl.uniformMatrix4fv(program.uMVMatrix, false, modelMatrix);
     gl.uniformMatrix4fv(program.uNormalMatrix, false, normalMatrix);
-
+    
     // Iterate over every part inside of the `parts` array
-    parts.forEach(part => {
-        // Bind
-        gl.bindVertexArray(part.vao);
-        gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, part.ibo);
+    let i = 0;
+    sceneObjects.forEach(object => {
+        console.log(object.name);
+        mat4.translate(modelMatrix, modelMatrix, [3 * i, -30, -120]);
+        gl.uniformMatrix4fv(program.uMVMatrix, false, modelMatrix);
+        i+=1;
+        object.parts.forEach(part => {
+            
+            // Bind
+            gl.bindVertexArray(part.vao);
+            gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, part.ibo);
+            
+            // Draw
+            gl.drawElements(gl.TRIANGLES, part.indices.length, gl.UNSIGNED_SHORT, 0);
 
-        // Draw
-        gl.drawElements(gl.TRIANGLES, part.indices.length, gl.UNSIGNED_SHORT, 0);
-
-        // Clean
-        gl.bindVertexArray(null);
-        gl.bindBuffer(gl.ARRAY_BUFFER, null);
-        gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, null);
+            // Clean
+            gl.bindVertexArray(null);
+            gl.bindBuffer(gl.ARRAY_BUFFER, null);
+            gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, null);    
+        });
     });
+    // parts.forEach(part => {
+    //     // Bind
+    //     gl.bindVertexArray(part.vao);
+    //     gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, part.ibo);
+
+    //     // Draw
+    //     gl.drawElements(gl.TRIANGLES, part.indices.length, gl.UNSIGNED_SHORT, 0);
+
+    //     // Clean
+    //     gl.bindVertexArray(null);
+    //     gl.bindBuffer(gl.ARRAY_BUFFER, null);
+    //     gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, null);
+    // });
 }
 
-function render(){
+function render(time){
     requestAnimationFrame(render);
-    drawParts();
+    drawParts(time);
 }
 
 function initLights(){
@@ -378,7 +418,9 @@ function init()
     gl.enable(gl.DEPTH_TEST);
 
     initProgram();
-    loadMoreParts('common/models/nissan-gtr');
+    loadMoreParts('common/models/nissan-gtr', 179);
+    //.catch(error => console.error(error));
+    loadMoreParts('common/models/audi-r8', 150);
     initLights();
     render();
 
