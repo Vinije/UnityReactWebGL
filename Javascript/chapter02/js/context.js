@@ -7,6 +7,7 @@ projMatrix = mat4.create(),
 parts = [],
 lightDiffuseColor = [1, 1, 0],
 lightDirection = [1, -1, -1],
+lightPosition = [4.5, 3, 15],
 materialDiffuse = [0.5, 0.5, 0.5],
 normalMatrix = mat4.create(),
 normals = [],
@@ -100,6 +101,7 @@ function initProgram(){
     program.aVertexPosition = gl.getAttribLocation(program, 'aVertexPosition');
     program.aVertexNormal = gl.getAttribLocation(program, 'aVertexNormal');
 
+    program.uLightPosition = gl.getUniformLocation(program, 'uLightPosition');
     program.uProjMatrix = gl.getUniformLocation(program, 'uProjMatrix');
     program.uMVMatrix = gl.getUniformLocation(program, 'uMVMatrix');
     program.uModelColor = gl.getUniformLocation(program, 'uModelColor');
@@ -316,6 +318,7 @@ function initLights(){
     gl.uniform3fv(program.uLightDirection, lightDirection);
     gl.uniform3fv(program.uLightDiffuse, lightDiffuseColor);
     gl.uniform3fv(program.uMaterialDiffuse, materialDiffuse);
+    gl.uniform3fv(program.uLightPosition, lightPosition);
 }
 
 function processKey(ev) {

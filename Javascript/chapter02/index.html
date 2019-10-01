@@ -24,33 +24,29 @@
     uniform mat4 uMVMatrix;
     uniform mat4 uProjMatrix;
     uniform mat4 uNormalMatrix;
-    uniform vec3 uLightDirection;
-    uniform vec3 uLightDiffuse;
-    uniform vec3 uMaterialDiffuse;
+    uniform vec3 uLightPosition;
 
     in vec3 aVertexPosition;
     in vec3 aVertexNormal;
 
-    out vec4 vVertexColor;
+    out vec3 normal;
+    out vec3 lightRay;
+    out vec3 eyeVector;
 
     void main(void) {
       // Calculate the normal vector
-      vec3 N = normalize(vec3(uNormalMatrix * vec4(aVertexNormal, 1.0)));
+      normal = normalize(vec3(uNormalMatrix * vec4(aVertexNormal, 1.0)));
 
-      // Normalized light direction
-      vec3 L = normalize(uLightDirection);
+      vec4 vertex = uMVMatrix * vec4(aVertexPosition,1.0);
+      vec4 lightp = vec4(uLightPosition,1.0);
 
-      // Dot product of the normal product and negative light direction vector
-      float lambertTerm = dot(N, -L);
-
-      // Calculating the diffuse color based on the Lambertian reflection model
-      vec3 Id = uMaterialDiffuse * uLightDiffuse * lambertTerm;
-
-      // Set the varying to be used inside of the fragment shader
-      vVertexColor = vec4(Id, 1.0);
+      //calculate lightRay
+      lightRay = vertex.xyz - lightp.xyz;
       
+      eyeVector = -vertex.xyz;
+
       // Setting the vertex position
-      gl_Position = uProjMatrix * uMVMatrix * vec4(aVertexPosition, 1.0);
+      gl_Position = uProjMatrix * vertex;
     }
 
   </script>
@@ -58,18 +54,43 @@
   <!-- fragment Shader -->
   <script id="fragment-shader" type="fragment-shader">
     #version 300 es
-		precision mediump float;
+    precision mediump float;
+    
+    uniform vec3 uLightDirection;
+    uniform vec3 uLightDiffuse;
+    uniform vec3 uMaterialDiffuse;
 
-    // Expect the interpolated value fro, the vertex shader
-    in vec4 vVertexColor;
+    in vec3 normal;
+    in vec3 lightRay;
+    in vec3 eyeVector;
 
     // Return the final color as fragColor
     out vec4 fragColor;
 
     void main(void)  {
-      // Simply set the value passed in from the vertex shader
-      fragColor = vVertexColor;
-      //fragColor = vec4(1,1,1,1);
+      
+      vec3 L = normalize(lightRay);
+      vec3 N = normalize(normal);
+      vec3 E = normalize(eyeVector);
+
+      vec4 finalColor = vec4(0.1,0.1,0.1,1.0);
+
+      float lambertTerm = dot(N, -L);
+
+      if(lambertTerm>0.0){
+        finalColor += vec4(uMaterialDiffuse,1.0) * lambertTerm;
+        vec3 halfDir = normalize(L+E);
+
+        float shinines = 32.0;
+        float specularAngle = max(dot(halfDir, N),0.0);
+        float specular = pow(specularAngle, shinines);
+
+        finalColor += specular * vec4(1,1,1,1)*10.0;
+        
+      }
+      float t = length(eyeVector);
+      vec4 fogColor = vec4(0.5,0.5,0.5,1.0) * exp(-t);
+      fragColor = finalColor + fogColor;
     }
 
   </script>
