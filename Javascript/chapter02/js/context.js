@@ -15,11 +15,6 @@ elevation = 0;
 
 let sceneObjects = new Map();
 
-let sceneObject = {
-    name,
-    parts: []
-};
-
 function updateClearColor(...color){
     gl.clearColor(...color);
     gl.clear(gl.COLOR_BUFFER_BIT);
@@ -159,11 +154,14 @@ function initBuffers(){
 
 }
 
-function loadMoreParts(filePath, count){
+function loadMoreParts(filePath, count, position){
     //Inicializace objektu ve scene
     if (sceneObjects.get(filePath) == null) {
-        sceneObject.name = filePath;
-        sceneObject.parts = [];
+        let sceneObject = {
+            translation: position,
+            name: filePath,
+            parts: []
+        }
         sceneObjects.set(filePath, sceneObject);
     }
     
@@ -208,7 +206,9 @@ function loadMoreParts(filePath, count){
 
           // Push data onto parts array
           if (sceneObjects.get(filePath)) {
-            sceneObjects.get(filePath).parts.push(data);    
+                console.log("Nacitam data: "+filePath+" "+sceneObjects.get(filePath).parts.length);
+                sceneObjects.get(filePath).parts.push(data);    
+                
           }
           
           // Clean
@@ -294,7 +294,7 @@ function drawParts(time){
     gl.viewport(0, 0, gl.canvas.width, gl.canvas.height);
 
     //set matrices
-    mat4.perspective(projMatrix, 45, gl.canvas.width / gl.canvas.height, 10, 10000);
+    mat4.perspective(projMatrix, 45, gl.canvas.width / gl.canvas.height, 0.01, 10000);
     mat4.identity(modelMatrix);
 
     //mat4.translate(modelMatrix, modelMatrix, [0, -15, -120]);
@@ -313,12 +313,16 @@ function drawParts(time){
     gl.uniformMatrix4fv(program.uNormalMatrix, false, normalMatrix);
     
     // Iterate over every part inside of the `parts` array
-    let i = 0;
     sceneObjects.forEach(object => {
-        console.log(object.name);
-        mat4.translate(modelMatrix, modelMatrix, [3 * i, -30, -120]);
-        gl.uniformMatrix4fv(program.uMVMatrix, false, modelMatrix);
-        i+=1;
+        //console.log(object.name + " "+i);
+        mat4.identity(modelMatrix);
+        let objectMat = mat4.create();
+        mat4.translate(objectMat, modelMatrix, object.translation);
+
+        //console.log(objectMat);
+        
+        gl.uniformMatrix4fv(program.uMVMatrix, false, objectMat);
+
         object.parts.forEach(part => {
             
             // Bind
@@ -418,9 +422,9 @@ function init()
     gl.enable(gl.DEPTH_TEST);
 
     initProgram();
-    loadMoreParts('common/models/nissan-gtr', 179);
+    loadMoreParts('common/models/nissan-gtr', 179, [10,-10.5,-120]);
     //.catch(error => console.error(error));
-    loadMoreParts('common/models/audi-r8', 150);
+    loadMoreParts('common/models/audi-r8', 150, [0,-2.5,-12]);
     initLights();
     render();
 
