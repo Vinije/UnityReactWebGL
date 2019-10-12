@@ -225,9 +225,11 @@
           else if (alias === 'flag1') {
             if (interpolationType !== linearInterpolation) {
               mat4.translate(transforms.modelViewMatrix, transforms.modelViewMatrix, controlPoints[1]);
-              object.diffuse = close(controlPoints[1], position[sceneTime], 3)
-                ? flagColorHighlight
-                : flagColor;
+              if(close(controlPoints[1], position[sceneTime],3)){
+                object.diffuse = flagColorHighlight;  
+              }
+              if (sceneTime === 0)
+                object.diffuse = flagColor;
             }
             else {
               transforms.pop();
@@ -237,9 +239,11 @@
           else if (alias === 'flag2') {
             if (interpolationType !== linearInterpolation) {
               mat4.translate(transforms.modelViewMatrix, transforms.modelViewMatrix, controlPoints[2]);
-              object.diffuse = close(controlPoints[2], position[sceneTime], 3)
-                ? flagColorHighlight
-                : flagColor;
+              if(close(controlPoints[2], position[sceneTime],3)){
+                object.diffuse = flagColorHighlight;  
+              }
+              if (sceneTime === 0)
+                object.diffuse = flagColor;
             }
             else {
               transforms.pop();
@@ -249,9 +253,11 @@
           else if (alias === 'flag3') {
             if (interpolationType !== linearInterpolation) {
               mat4.translate(transforms.modelViewMatrix, transforms.modelViewMatrix, controlPoints[3]);
-              object.diffuse = close(controlPoints[3], position[sceneTime], 3)
-                ? flagColorHighlight
-                : flagColor;
+              if(close(controlPoints[3], position[sceneTime],3)){
+                object.diffuse = flagColorHighlight;  
+              }
+              if (sceneTime === 0)
+                object.diffuse = flagColor;
             }
             else {
               transforms.pop();
@@ -294,6 +300,7 @@
     function animate() {
       sceneTime += 1;
       if (sceneTime === incrementSteps) sceneTime = 0;
+
       draw();
     }
 

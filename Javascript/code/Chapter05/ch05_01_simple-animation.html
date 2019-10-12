@@ -121,9 +121,11 @@
       fixedLight = false,
       dxSphere = 0.1,
       dxCone = 0.15,
+      dyCone = 0.15,
       spherePosition = 0,
-      conePosition = 0,
-      frequency = 5;
+      conePositionX = 0,
+      conePositionY = 0,
+      frequency = 3;
 
     function configure() {
       // Configure `canvas`
@@ -214,7 +216,7 @@
           }
           else if (object.alias === 'cone') {
             const coneTransform = transforms.modelViewMatrix;
-            mat4.translate(coneTransform, coneTransform, [conePosition, 0, 0]);
+            mat4.translate(coneTransform, coneTransform, [conePositionX, conePositionY, 0]);
           }
 
           transforms.setMatrixUniforms();
@@ -257,9 +259,15 @@
         dxSphere = -dxSphere;
       }
 
-      conePosition += dxCone;
-      if (conePosition >= 35 || conePosition <= -35) {
+      conePositionX += dxCone;
+      conePositionY += dyCone;
+
+      if (conePositionX >= 35 || conePositionX <= -35) {
         dxCone = -dxCone;
+      }
+
+      if (conePositionY >= 35 || conePositionY <= -35) {
+        dyCone = -dyCone;
       }
 
       draw();
@@ -271,6 +279,7 @@
 
       let steps = Math.floor(elapsedTime / frequency);
       while (steps > 0) {
+        //console.log("animuji " + steps);
         animate();
         steps -= 1;
       }
@@ -280,6 +289,7 @@
 
     function render() {
       initialTime = new Date().getTime();
+      console.log("Volam render" +initialTime);
       setInterval(onFrame, frequency / 1000);
     }
 

@@ -38,7 +38,7 @@ class Camera {
 
   // Change camera type
   setType(type) {
-    ~Camera.TYPES.indexOf(type)
+    Camera.TYPES.indexOf(type)
       ? this.type = type
       : console.error(`Camera type (${type}) not supported`);
   }

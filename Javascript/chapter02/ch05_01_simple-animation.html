@@ -119,12 +119,11 @@
       gl, scene, program, camera, transforms,
       elapsedTime, initialTime,
       fixedLight = false,
-      dxSphere = 0.5,
-      dx_cone = 0.15,
+      dxSphere = 0.1,
+      dxCone = 0.15,
       spherePosition = 0,
       conePosition = 0,
-      animationRate = 5,
-      simulationRate = 30;
+      frequency = 5;
 
     function configure() {
       // Configure `canvas`
@@ -258,9 +257,9 @@
         dxSphere = -dxSphere;
       }
 
-      conePosition += dx_cone;
+      conePosition += dxCone;
       if (conePosition >= 35 || conePosition <= -35) {
-        dx_cone = -dx_cone;
+        dxCone = -dxCone;
       }
 
       draw();
@@ -268,20 +267,20 @@
 
     function onFrame() {
       elapsedTime = (new Date).getTime() - initialTime;
-      if (elapsedTime < animationRate) return;
+      if (elapsedTime < frequency) return;
 
-      let steps = Math.floor(elapsedTime / simulationRate);
+      let steps = Math.floor(elapsedTime / frequency);
       while (steps > 0) {
         animate();
         steps -= 1;
       }
 
-      initialTime = new Date().getTime();
+      initialTime = (new Date).getTime();
     }
 
     function render() {
       initialTime = new Date().getTime();
-      setInterval(onFrame, animationRate / 1000);
+      setInterval(onFrame, frequency / 1000);
     }
 
     function init() {

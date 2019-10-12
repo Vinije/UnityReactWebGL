@@ -25,31 +25,33 @@
     #version 300 es
     precision mediump float;
 
+    const int numberoflights = 4;
+
     uniform mat4 uModelViewMatrix;
     uniform mat4 uProjectionMatrix;
     uniform mat4 uNormalMatrix;
     uniform vec4 uMaterialDiffuse;
-    uniform vec3 uPositionRedLight;
-    uniform vec3 uPositionGreenLight;
+    
+    uniform vec3 uLightPosition[numberoflights];
 
     in vec3 aVertexPosition;
     in vec3 aVertexNormal;
     in vec4 aVertexColor;
 
     out vec3 vNormal;
-    out vec3 vRedRay;
-    out vec3 vGreenRay;
+    out vec3 lightRay[numberoflights];
+
+    
 
     void main(void) {
       vec4 vertex = uModelViewMatrix * vec4(aVertexPosition, 1.0);
       vNormal = vec3(uNormalMatrix * vec4(aVertexNormal, 1.0));
 
-      vec4 redLightPosition = uModelViewMatrix * vec4(uPositionRedLight, 1.0);
-      vec4 greenLightPosition = uModelViewMatrix * vec4(uPositionGreenLight, 1.0);
-
-      vRedRay = vertex.xyz - redLightPosition.xyz;
-      vGreenRay = vertex.xyz - greenLightPosition.xyz;
-
+      for(int i=0;i<numberoflights;i++){
+        vec4 lightPosition = uModelViewMatrix * vec4(uLightPosition[i], 1.0);
+        lightRay[i] = vertex.xyz - lightPosition.xyz;
+      }
+      
       gl_Position = uProjectionMatrix * uModelViewMatrix * vec4(aVertexPosition, 1.0);
     }
   </script>
@@ -63,15 +65,16 @@
     uniform bool uWireframe;
     uniform bool uLightSource;
     uniform vec4 uLightAmbient;
-    uniform vec4 uDiffuseRedLight;
-    uniform vec4 uDiffuseGreenLight;
     uniform float uCutOff;
 
+    const int numberoflights = 4;
     in vec3 vNormal;
-    in vec3 vRedRay;
-    in vec3 vGreenRay;
     in vec4 vFinalColor;
 
+    uniform vec4 uLightDiffuse[numberoflights];
+
+    in vec3 lightRay[numberoflights];
+    
     out vec4 fragColor;
 
     void main(void) {
@@ -80,23 +83,17 @@
       }
       else {
         vec4 Ia = uLightAmbient * uMaterialAmbient;
-        vec4 Id1 = vec4(0.0, 0.0, 0.0, 1.0);
-        vec4 Id2 = vec4(0.0, 0.0, 0.0, 1.0);
-
         vec3 N = normalize(vNormal);
 
-        float lambertTermOne = dot(N, -normalize(vRedRay));
-        float lambertTermTwo = dot(N, -normalize(vGreenRay));
-
-        if (lambertTermOne > uCutOff) {
-          Id1 = uDiffuseRedLight * uMaterialDiffuse * lambertTermOne;
+        vec4 Id = vec4(0.0,0.0,0.0,1);
+        for(int i=0;i<numberoflights;i++){
+          float lamberTerm = dot(N, -normalize(lightRay[i]));
+          if(lamberTerm > uCutOff){
+            Id += uLightDiffuse[i] * uMaterialDiffuse * lamberTerm;
+          }
         }
-
-        if (lambertTermTwo > uCutOff) {
-          Id2 = uDiffuseGreenLight * uMaterialDiffuse * lambertTermTwo;
-        }
-
-        fragColor = vec4(vec3(Ia + Id1 + Id2), 1.0);
+        
+        fragColor = vec4(vec3(Id), 1.0);
       }
     }
   </script>
@@ -107,7 +104,11 @@
     let gl, scene, program, camera, transforms, clock,
       lightCutOff = 0.5,
       redLightPosition = [0, 7, 3],
-      greenLightPosition = [2.5, 3, 3];
+      greenLightPosition = [2.5, 3, 3],
+      blueLightPosition = [1.5,3,3],
+      whiteLightPosition = [1,3,3],
+      lights,
+      wireWall;
 
     function configure() {
       const canvas = utils.getCanvas('webgl-canvas');
@@ -136,10 +137,8 @@
         'uMaterialDiffuse',
         'uMaterialAmbient',
         'uLightAmbient',
-        'uDiffuseRedLight',
-        'uDiffuseGreenLight',
-        'uPositionRedLight',
-        'uPositionGreenLight',
+        'uLightPosition',
+        'uLightDiffuse',
         'uWireframe',
         'uLightSource',
         'uCutOff'
@@ -168,11 +167,22 @@
       greenLight.setPosition(greenLightPosition);
       greenLight.setDiffuse([0, 1, 0, 1]);
 
-      gl.uniform3fv(program.uPositionRedLight, redLight.position);
-      gl.uniform3fv(program.uPositionGreenLight, greenLight.position);
+      const blueLight = new Light('blueLight');
+      blueLight.setPosition(blueLightPosition);
+      blueLight.setDiffuse([0,0,1,1]);
 
-      gl.uniform4fv(program.uDiffuseRedLight, redLight.diffuse);
-      gl.uniform4fv(program.uDiffuseGreenLight, greenLight.diffuse);
+      const whiteLight = new Light('whiteLight');
+      whiteLight.setPosition(whiteLightPosition);
+      whiteLight.setDiffuse([1,1,1,1]);
+
+      lights = new LightsManager();
+      lights.add(blueLight);
+      lights.add(redLight);
+      lights.add(greenLight);
+      lights.add(whiteLight);
+
+      gl.uniform3fv(program.uLightPosition, lights.getArray('position'));
+      gl.uniform4fv(program.uLightDiffuse, lights.getArray('diffuse'));
 
       gl.uniform1f(program.uCutOff, lightCutOff);
       gl.uniform4fv(program.uLightAmbient, [1, 1, 1, 1]);
@@ -183,6 +193,8 @@
       scene.load('/common/models/geometries/wall.json', 'wall');
       scene.load('/common/models/geometries/sphere3.json', 'redLight');
       scene.load('/common/models/geometries/sphere3.json', 'greenLight');
+      scene.load('/common/models/geometries/sphere3.json', 'blueLight');
+      scene.load('/common/models/geometries/sphere3.json', 'whiteLight');
     }
 
     function draw() {
@@ -199,15 +211,32 @@
 
           const { alias } = object;
           if (alias === 'redLight') {
-            mat4.translate(transforms.modelViewMatrix, transforms.modelViewMatrix, program.getUniform(program.uPositionRedLight));
-            object.diffuse = program.getUniform(program.uDiffuseRedLight);
+            const redLight = lights.get(alias);
+            mat4.translate(transforms.modelViewMatrix, transforms.modelViewMatrix, redLight.position);
+            object.diffuse = redLight.diffuse;
+            gl.uniform1i(program.uLightSource, true);
+          }
+
+          if (alias === 'blueLight') {
+            const blueLight = lights.get(alias);
+            mat4.translate(transforms.modelViewMatrix, transforms.modelViewMatrix, blueLight.position);
+            object.diffuse = blueLight.diffuse;
             gl.uniform1i(program.uLightSource, true);
           }
 
           if (alias === 'greenLight') {
-            mat4.translate(transforms.modelViewMatrix, transforms.modelViewMatrix, program.getUniform(program.uPositionGreenLight));
-            object.diffuse = program.getUniform(program.uDiffuseGreenLight);
+            const greenLight = lights.get(alias);
+            mat4.translate(transforms.modelViewMatrix, transforms.modelViewMatrix, greenLight.position);
+            object.diffuse = greenLight.diffuse;
             gl.uniform1i(program.uLightSource, true);
+          }
+
+          if (alias === 'whiteLight') {
+            const whiteLight = lights.get(alias);
+            mat4.translate(transforms.modelViewMatrix, transforms.modelViewMatrix, whiteLight.position);
+            object.diffuse = whiteLight.diffuse;
+            gl.uniform1i(program.uLightSource, true);
+            object.wireframe = true;
           }
 
           transforms.setMatrixUniforms();
@@ -252,6 +281,8 @@
 
     function initControls() {
       utils.configureControls({
+        
+
         'Camera Type': {
           value: camera.type,
           options: [Camera.TRACKING_TYPE, Camera.ORBITING_TYPE],
@@ -261,15 +292,21 @@
           }
         },
         ...[
-          {
+        {
             name: 'Red Light',
-            position: redLightPosition,
-            uniform: program.uPositionRedLight
+            id: 'redLight',
+            position: redLightPosition
           },
+          
           {
             name: 'Green Light',
-            position: greenLightPosition,
-            uniform: program.uPositionGreenLight
+            id: 'greenLight',
+            position: greenLightPosition
+          },
+          {
+            name: 'Blue Light',
+            id: 'blueLight',
+            position: blueLightPosition
           },
         ].reduce((controls, light) => {
           const positionKeys = [
@@ -282,7 +319,7 @@
               value: light.position[i],
               min: -15, max: 15, step: 0.1,
               onChange: (v, state) => {
-                gl.uniform3fv(light.uniform, positionKeys.map(p => state[p]));
+                lights.get(light.id).position = positionKeys.map(p => state[p]);
               }
             };
             return positionControls;
