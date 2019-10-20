@@ -41,8 +41,10 @@
     in vec3 aVertexPosition;
     in vec3 aVertexNormal;
     in vec4 aVertexColor;
+    in vec2 aVertexTextureCoords;
 
     out vec4 vColor;
+    out vec2 texCoords;
 
     void main(void) {
       vec4 vertex = uModelViewMatrix * vec4(aVertexPosition, 1.0);
@@ -64,6 +66,7 @@
         Id = uLightDiffuse * uMaterialDiffuse * lambertTerm;
       }
 
+      texCoords = aVertexTextureCoords;
       vColor = vec4(vec3(Ia + Id), uAlpha);
       gl_Position = uProjectionMatrix * uModelViewMatrix * vec4(aVertexPosition, 1.0);
     }
@@ -75,20 +78,22 @@
 
     uniform vec4 uMaterialDiffuse;
     uniform bool uWireframe;
+    uniform sampler2D uSampler;
 
     in vec4 vColor;
+    in vec2 texCoords;
 
     out vec4 fragColor;
 
     void main(void) {
-      fragColor = vColor;
+      fragColor = vColor * texture(uSampler, texCoords);
     }
   </script>
 
   <script type="text/javascript">
     'use strict';
 
-    let gl, scene, program, camera, transforms, clock,
+    let gl, scene, program, camera, transforms, clock, texture,
       useVertexColors = false;
 
     function configure() {
@@ -109,7 +114,8 @@
       const attributes = [
         'aVertexPosition',
         'aVertexNormal',
-        'aVertexColor'
+        'aVertexColor',
+        'aVertexTextureCoords'
       ];
 
       const uniforms = [
@@ -124,7 +130,8 @@
         'uWireframe',
         'uAlpha',
         'uUseVertexColor',
-        'uUseLambert'
+        'uUseLambert',
+        'uSampler'
       ];
 
       program.load(attributes, uniforms);
@@ -143,11 +150,26 @@
       transforms = new Transforms(gl, program, camera, canvas);
 
       gl.uniform3fv(program.uLightPosition, [0, 5, 20]);
-      gl.uniform3fv(program.uLightAmbient, [1, 1, 1, 1]);
+      gl.uniform4fv(program.uLightAmbient, [1, 1, 1, 1]);
       gl.uniform4fv(program.uLightDiffuse, [1, 1, 1, 1]);
       gl.uniform1f(program.uAlpha, 1.0);
       gl.uniform1i(program.uUseVertexColor, useVertexColors);
       gl.uniform1i(program.uUseLambert, true);
+
+
+      texture = gl.createTexture();
+
+      const image = new Image();
+
+      image.src = '/common/images/stezka2.jpg';
+
+      image.onload = () => {
+        gl.bindTexture(gl.TEXTURE_2D, texture);
+        gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, image);
+        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
+        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
+        gl.bindTexture(gl.TEXTURE_2D, null);
+      };
     }
 
     function load() {
@@ -177,11 +199,19 @@
           gl.bindVertexArray(object.vao);
           gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, object.ibo);
 
+          if(object.textureCoords){
+              gl.activeTexture(gl.TEXTURE0);
+              gl.bindTexture(gl.TEXTURE_2D, texture);
+              gl.uniform1i(program.uSampler, 0);
+          }
+
           // Draw
           if (object.wireframe) {
             gl.drawElements(gl.LINES, object.indices.length, gl.UNSIGNED_SHORT, 0);
           }
           else {
+            
+            
             gl.enable(gl.CULL_FACE);
             gl.cullFace(gl.FRONT);
             gl.drawElements(gl.TRIANGLES, object.indices.length, gl.UNSIGNED_SHORT, 0);
