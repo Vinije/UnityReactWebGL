@@ -1,6 +1,9 @@
-var Game = {};
+var Game = {
+    SIZE: 6
+};
 
 Game.start = function(){
-    Draw.all();
+    Board.init();
+    Draw.init();
     Player.listen();
 }

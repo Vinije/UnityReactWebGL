@@ -6,13 +6,11 @@ Player.listen = function(){
 }
 
 Player.click = function(e){
-    var position = Draw.getPosition(e.target);
+    var position = Draw.getPosition(e.clientX, e.clientY);
     if (!position) {
         return;
     }
 
-    console.log(position[0]+" "+position[1]);
-
-    Board[position[0]][position[1]]++;
+    Board.addAtom(position[0], position[1]);
     Draw.all();
 }
