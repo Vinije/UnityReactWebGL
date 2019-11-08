@@ -119,9 +119,14 @@
     let gl, clock, program, camera, transforms, controls, scene,
       picker, showPickingImage = false;
 
+    let elapsedTime = 20000 ;
+    
     function configure() {
       const canvas = utils.getCanvas('webgl-canvas');
       utils.autoResizeCanvas(canvas);
+
+      const time = document.getElementById("time");
+      time.textContent = "asdasd";
 
       gl = utils.getGLContext(canvas);
       gl.clearColor(0.9, 0.9, 0.9, 1);
@@ -172,6 +177,7 @@
       camera.setElevation(-22);
       camera.setAzimuth(37);
       controls = new Controls(camera, canvas);
+      
       // Set picker
       controls.setPicker(picker);
 
@@ -229,7 +235,7 @@
     function load() {
       scene.add(new Floor(80, 20));
 
-      for (let i = 0; i < 100; i++) {
+      for (let i = 0; i < 20; i++) {
         const objectType = Math.floor(Math.random() * 2);
 
         const options = {
@@ -264,7 +270,16 @@
     }
 
     function processHits(hits) {
-      hits.forEach(hit => hit.diffuse = hit.previous);
+
+      hits.forEach(hit =>  {
+        hit.diffuse = hit.previous;
+        if(hit.alias.substring(0,5) === "ball_" ){
+          console.log(ballsInScene());
+          scene.remove(hit.alias);
+        }
+
+
+      });
     }
 
     function movePickedObjects(dx, dy) {
@@ -372,10 +387,32 @@
       }
     }
 
+    function ballsInScene(){
+      let number = 0;
+      scene.objects.forEach(obj => {
+        if(obj.alias.substring(0,5)==="ball_"){
+          number++;
+        }
+      });
+
+      return number;
+    }
+
+    function timeIsOut(){
+      alert("Time is out, balls left: "+ ballsInScene());
+      scene.objects = [];
+      load();
+      camera.goHome();
+      camera.setElevation(-40);
+      camera.setAzimuth(-30);
+      setTimeout(timeIsOut, elapsedTime);
+    }
+
     function init() {
       configure();
       load();
       clock.on('tick', render);
+      setTimeout(timeIsOut, elapsedTime);
 
       initControls();
     }
@@ -402,10 +439,11 @@
 </head>
 
 <body>
-
+  <div id = "time"></div>
   <canvas id="webgl-canvas">
     Your browser does not support the HTML5 canvas element.
   </canvas>
+  
 
 </body>
 </html>

@@ -251,23 +251,43 @@
     }
 
     function hitProperty(obj) {
-      // To be implemented
+      
+      return obj.pcolor;
     }
 
     function addHit(obj) {
-      // To be implemented
+      obj.previous = obj.diffuse.slice(0);
+      obj.diffuse = obj.pcolor;
     }
 
     function removeHit(obj) {
-      // To be implemented
+      obj.diffuse = obj.previous.slice(0);
     }
 
     function processHits(hits) {
-      //To be Implemented
+      hits.forEach(hit => hit.diffuse = hit.previous);
     }
 
     function movePickedObjects(dx, dy) {
-      // To be implemented
+      const hits = picker.getHits();  
+      if (!hits) return;  
+      
+      const factor = Math.max(Math.max(camera.position[0], camera.position[1]), camera.position[2]  ) / 2000;  
+      
+      hits.forEach(hit => {    
+        const scaleX = vec3.create();    
+        const scaleY = vec3.create();    
+        if (controls.alt) {      
+          vec3.scale(scaleY, camera.normal, dy * factor);    
+        }    
+        else {      
+          vec3.scale(scaleY, camera.up, -dy * factor);      
+          vec3.scale(scaleX, camera.right, dx * factor);    
+        }
+        
+        vec3.add(hit.position, hit.position, scaleY);    
+        vec3.add(hit.position, hit.position, scaleX);  
+      });
     }
 
     function render() {

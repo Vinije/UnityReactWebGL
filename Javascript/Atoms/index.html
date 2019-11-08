@@ -1,0 +1,52 @@
+<!DOCTYPE html> 
+<html>
+    <head>
+        <meta charset="utf-8"/>
+        <title>Atoms</title>
+        <link rel="stylesheet" href="style.css"/>
+    </head>
+
+    <body>
+        
+        <!--Trida pro vykreslovani-->
+        <script src="Draw.js"></script>
+
+        <!--Trida pro hraci desku-->
+        <script src="Board.js"></script>
+        
+        <!--Trida predstavujici hrace a jeho akce-->
+        <script src="Player.js"></script>
+
+        <!--Trida implementuje herni stavy-->
+        <script src="Game.js"></script>
+
+        <script>Game.start()</script>
+        <script>
+            //tr row td column
+            var columns = 6;
+            var rows = 6;
+            var tableSelector = document.querySelector("table");
+
+            for (let row = 0; row < rows; row++) {
+                var r = document.createElement("tr");
+                for(let col = 0; col < columns; col++){
+                    var c = document.createElement("td");
+                    r.appendChild(c);
+                }                
+                tableSelector.appendChild(r);
+            }
+        
+            document.addEventListener("click", function(e) {
+                var node = e.target;
+                if (node.nodeName == "TD") {
+                    update(node);
+                }
+            });
+
+            function update(node){
+                node.innerHTML += "o";
+            }
+        </script>
+
+    </body>
+</html>
