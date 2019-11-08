@@ -6,6 +6,6 @@ var N = 6;
 for (let r = 0; r < N; r++) {
     Board.push([]);
     for (let c = 0; c < N; c++) {
-        Board[i].push(0);
+        Board[r].push(0);
     }  
 }
