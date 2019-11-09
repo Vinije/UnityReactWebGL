@@ -1,21 +1,31 @@
-var Player = {};
+var Player = {
+    current: 0
+};
 
 Player.listen = function(){
-    document.body.addEventListener("click", Player.click);
+    document.body.addEventListener("click", Player);
 }
 
 Player.startListening = function(){
-    document.body.addEventListener("click", Player.click);
+    document.body.addEventListener("click", Player);
 }
 
 Player.stopListening = function(){
     document.body.removeEventListener("click", Player.click);
 }
 
-Player.click = function(e){
+Player.handleEvent = function(e){
     var position = Draw.getPosition(e.clientX, e.clientY);
     if (!position) {
         return;
     }
-    Board.addAtom(position[0], position[1]);
+
+    var existing = Board.getPlayer(position[0],position[1]);
+    if (existing!=-1 && existing != this.current) {
+        return;
+    }
+
+    Board.addAtom(position[0], position[1], this.current);
+
+    this.current = (this.current + 1) % Score.getPlayerCount();
 }

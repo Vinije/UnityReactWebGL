@@ -11,21 +11,29 @@ Board.init = function(){
             var limit = this._getLimit(r,c);
             var cell = {
                 atoms: 0,
-                limit: limit
+                limit: limit,
+                player: -1
             }
             this._data[r].push(cell);
         }  
     }
 }
 
+Board.getPlayer = function(x,y){
+    return this._data[x][y].player;
+}
+
 Board.getAtoms = function(x,y){
     return this._data[x][y].atoms;
 }
 
-Board.addAtom = function(x,y){
-    this._addAndCheck(x,y);
-
-    if (this._criticals.length > 0) {
+Board.addAtom = function(x,y,player){
+    this._addAndCheck(x,y,player);
+    
+    if(Score.isGameOver()){
+        return;
+    }
+    else if (this._criticals.length > 0) {
         Player.stopListening();
         this._explode();
         
@@ -45,13 +53,20 @@ Board._explode = function(){
 
     cell.atoms -= neighbours.length;
 
+    if (cell.atoms < 0) {
+        debugger;
+    }
+
     Draw._cell(x,y);
 
     neighbours.forEach(element => {
-        this._addAndCheck(element[0], element[1]);
+        this._addAndCheck(element[0], element[1], cell.player);
     });
 
-    if (this._criticals.length > 0) {
+    if(Score.isGameOver()){
+        return;
+    }
+    else if (this._criticals.length > 0) {
         setTimeout(() => {
            Board._explode(); 
         }, this.DELAY);
@@ -61,15 +76,25 @@ Board._explode = function(){
     }
 }
 
-Board._addAndCheck = function(x,y){
-    var cell = this._data[x][y];    
-    cell.atoms += 1;
+Board._addAndCheck = function(x,y, player){
+    var cell = this._data[x][y];   
 
-    if (cell.atoms > cell.limit) {
-        this._criticals.push([x,y]);
-    }
+    Score.removePoint(cell.player);
+    Score.addPoint(player);
+
+    cell.atoms += 1;
+    cell.player = player;
 
     Draw._cell(x,y);
+
+    if (cell.atoms > cell.limit) {
+        for (let i = 0; i < this._criticals.length; i++) {
+            var critX = this._criticals[i][0];
+            var critY = this._criticals[i][1];
+            if(critX==x && critY==y) return;          
+        }
+        this._criticals.push([x,y]);
+    }
 }
 
 Board._getNeighbours = function(x,y){

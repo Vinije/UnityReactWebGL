@@ -5,7 +5,10 @@ var Draw = {
         [[1/4, 1/4],[3/4, 3/4]],
         [[1/4, 1/4],[1/2, 1/2],[3/4, 3/4]],
         [[1/4, 1/4],[1/4, 3/4],[3/4, 1/4],[3/4, 3/4]],
-        [[1/4, 1/4],[1/4, 3/4],[3/4, 1/4],[3/4, 3/4],[1/2, 1/2]]
+        [[1/4, 1/4],[1/4, 3/4],[3/4, 1/4],[3/4, 3/4],[1/2, 1/2]],
+        [[1/4, 1/4],[1/4, 3/4],[3/4, 1/4],[3/4, 3/4],[1/4, 1/2],[3/4,1/2]],
+        [[1/4, 1/4],[1/4, 3/4],[3/4, 1/4],[3/4, 3/4],[1/4, 1/2],[3/4,1/2],[1/2, 1/4]],
+        [[1/4, 1/4],[1/4, 3/4],[3/4, 1/4],[3/4, 3/4],[1/4, 1/2],[3/4,1/2],[1/2, 1/4],[1/2, 3/4]]
     ],
     CELL: 60,
     _context: null,
@@ -92,25 +95,33 @@ Draw._cell = function(x, y){
         return;
     }
 
+    var player = Board.getPlayer(x,y);
+    var color = Score.getColor(player);
+
     var positions = this.POSITIONS[count];
+
+    if (count >= this.POSITIONS.length) {
+        debugger;
+    }
+
     if (positions) {
         for (let i = 0; i < positions.length; i++) {
             var position = positions[i];
             var atomX = (x + position[0])*this.CELL;
             var atomY = (y + position[1])*this.CELL;
-            this._atom(atomX, atomY);      
+            this._atom(atomX, atomY, color);      
         }    
     }
 }
 
-Draw._atom = function(x, y){
+Draw._atom = function(x, y, color){
 
     this._context.beginPath();
 
     this._context.moveTo(x + this.ATOM, y);
     this._context.arc(x,y, this.ATOM, 0, 2*Math.PI, false);
 
-    this._context.fillStyle = "blue";
+    this._context.fillStyle = color;
     this._context.fill();
     this._context.stroke();
 
