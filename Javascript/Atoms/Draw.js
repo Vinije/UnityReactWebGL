@@ -4,7 +4,8 @@ var Draw = {
         [[1/2, 1/2]],
         [[1/4, 1/4],[3/4, 3/4]],
         [[1/4, 1/4],[1/2, 1/2],[3/4, 3/4]],
-        [[1/4, 1/4],[1/4, 3/4],[3/4, 1/4],[3/4, 3/4]]
+        [[1/4, 1/4],[1/4, 3/4],[3/4, 1/4],[3/4, 3/4]],
+        [[1/4, 1/4],[1/4, 3/4],[3/4, 1/4],[3/4, 3/4],[1/2, 1/2]]
     ],
     CELL: 60,
     _context: null,
@@ -24,20 +25,27 @@ Draw.init = function (){
     this._context = canvas.getContext("2d");
     this._context.lineWidth = this.LINE;
 
+    this._context.fillStyle = "#000";
+    
+    //first render black background
+    this._context.fillRect(0,0,size, size);
+
+    //then render lines
+    this._lines();
+
+    //then render bodies of cells 
+    for (let i = 0; i < Game.SIZE; i++) {
+        for (let j = 0; j < Game.SIZE; j++) {
+            this._cell(i,j);          
+        }      
+    }
+
     document.body.appendChild(canvas);
-    this.all();
 }
 
-Draw.all = function(){
-    this._context.fillStyle = "#fff";
-    var width = this._context.canvas.width;
-    var height = this._context.canvas.height;
-
-    this._context.fillRect(0,0,width, height);
-
-    this._lines();
-    this._cells();
-};
+// // Draw.all = function(){
+//     this._cells();
+// };
 
 Draw._lines = function(){
     this._context.beginPath();
@@ -60,16 +68,29 @@ Draw._lines = function(){
 
 }
 
-Draw._cells = function(){
+// Draw._cells = function(){
 
-    for (let r = 0; r < Game.SIZE; r++) {
-        for (let c = 0; c < Game.SIZE; c++) {
-            this._cell(r,c, Board.getAtoms(r,c));          
-        }      
+//     for (let r = 0; r < Game.SIZE; r++) {
+//         for (let c = 0; c < Game.SIZE; c++) {
+//             this._cell(r,c, Board.getAtoms(r,c));          
+//         }      
+//     }
+// }
+
+Draw._cell = function(x, y){
+
+    this._context.fillStyle = "#fff";
+    var size = this.CELL - this.LINE;
+    
+    var left = x * this.CELL + this.LINE;
+    var top = y * this.CELL + this.LINE;
+
+    this._context.fillRect(left,top,size, size);
+
+    var count = Board.getAtoms(x,y);
+    if (!count) {
+        return;
     }
-}
-
-Draw._cell = function(x, y, count){
 
     var positions = this.POSITIONS[count];
     if (positions) {

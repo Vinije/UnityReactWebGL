@@ -1,5 +1,7 @@
 var Board = {
-    _data: []
+    _data: [],
+    DELAY: 600,
+    _criticals: []
 }
 
 Board.init = function(){
@@ -21,20 +23,53 @@ Board.getAtoms = function(x,y){
 }
 
 Board.addAtom = function(x,y){
+    this._addAndCheck(x,y);
+
+    if (this._criticals.length > 0) {
+        Player.stopListening();
+        this._explode();
+        
+    }
+}
+
+
+Board._explode = function(){
+    var explodingCell = this._criticals.shift();
+    
+    var x = explodingCell[0];
+    var y = explodingCell[1];
+
+    var neighbours = this._getNeighbours(x,y);
 
     var cell = this._data[x][y];
 
-    cell.atoms +=1;
+    cell.atoms -= neighbours.length;
+
+    Draw._cell(x,y);
+
+    neighbours.forEach(element => {
+        this._addAndCheck(element[0], element[1]);
+    });
+
+    if (this._criticals.length > 0) {
+        setTimeout(() => {
+           Board._explode(); 
+        }, this.DELAY);
+    }
+    else{
+        Player.startListening();
+    }
+}
+
+Board._addAndCheck = function(x,y){
+    var cell = this._data[x][y];    
+    cell.atoms += 1;
 
     if (cell.atoms > cell.limit) {
-        var neighbours = this._getNeighbours(x,y);
-
-        cell.atoms -= neighbours.length;
-
-        neighbours.forEach(element => {
-            this.addAtom(element[0], element[1]);
-        });
+        this._criticals.push([x,y]);
     }
+
+    Draw._cell(x,y);
 }
 
 Board._getNeighbours = function(x,y){
