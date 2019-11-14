@@ -97,17 +97,6 @@ Board._addAndCheck = function(x,y, player){
     }
 }
 
-Board._getNeighbours = function(x,y){
-    var neighbours = [];
-
-    if (x>0) { neighbours.push([x-1, y]);}
-    if (x<Game.SIZE-1) { neighbours.push([x+1, y]);}
-    if (y>0) { neighbours.push([x, y-1]);}
-    if (y<Game.SIZE-1) { neighbours.push([x, y+1]);}
-
-    return neighbours;
-}
-
 Board._getLimit = function(x,y){
 
     var limit = 4;

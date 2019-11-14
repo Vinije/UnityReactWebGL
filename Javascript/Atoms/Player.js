@@ -15,7 +15,8 @@ Player.stopListening = function(){
 }
 
 Player.handleEvent = function(e){
-    var position = Draw.getPosition(e.clientX, e.clientY);
+    var cursor = new XY(e.clientX, e.clientY);
+    var position = Draw.getPosition(cursor);
     if (!position) {
         return;
     }

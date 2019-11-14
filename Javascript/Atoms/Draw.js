@@ -80,22 +80,22 @@ Draw._lines = function(){
 //     }
 // }
 
-Draw._cell = function(x, y){
+Draw._cell = function(xy){
 
     this._context.fillStyle = "#fff";
     var size = this.CELL - this.LINE;
     
-    var left = x * this.CELL + this.LINE;
-    var top = y * this.CELL + this.LINE;
+    var left = xy.x * this.CELL + this.LINE;
+    var top = xy.y * this.CELL + this.LINE;
 
     this._context.fillRect(left,top,size, size);
 
-    var count = Board.getAtoms(x,y);
+    var count = Board.getAtoms(xy);
     if (!count) {
         return;
     }
 
-    var player = Board.getPlayer(x,y);
+    var player = Board.getPlayer(xy);
     var color = Score.getColor(player);
 
     var positions = this.POSITIONS[count];
@@ -107,8 +107,9 @@ Draw._cell = function(x, y){
     if (positions) {
         for (let i = 0; i < positions.length; i++) {
             var position = positions[i];
-            var atomX = (x + position[0])*this.CELL;
-            var atomY = (y + position[1])*this.CELL;
+            
+            var atom = (xy.x + position[0])*this.CELL;
+            var atomY = (xy.y + position[1])*this.CELL;
             this._atom(atomX, atomY, color);      
         }    
     }
@@ -127,23 +128,20 @@ Draw._atom = function(x, y, color){
 
 }
 
-Draw.getPosition = function(cursorX, cursorY){
+Draw.getPosition = function(cursor){
     
     var rectangle = this._context.canvas.getBoundingClientRect();
 
-    cursorX -= rectangle.left;
-    cursorY -= rectangle.top;
+    cursor.add(new XY(-rectangle.left, -rectangle.top));
 
-    if (cursorX < 0 || cursorX > rectangle.width) {
+    if (cursor.x < 0 || cursor.x > rectangle.width) {
         return null;
     }
 
-    if (cursorY < 0 || cursorY > rectangle.height) {
+    if (cursor.y < 0 || cursor.y > rectangle.height) {
         return null;
     }
 
-    var cellX = Math.floor(cursorX / this.CELL);
-    var cellY = Math.floor(cursorY / this.CELL);
-
-    return [cellX, cellY];
+    cursor.divide(this.CELL, this.CELL);
+    return cursor;
 }
