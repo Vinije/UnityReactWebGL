@@ -8,6 +8,7 @@ class Game {
         this._board.onTurnDone = this._turnDone.bind(this);
         this._askPlayer();
     }
+    
     _isOver(scores) {
         return (Math.max.apply(Math, scores) == Game.SIZE * Game.SIZE);
     }
