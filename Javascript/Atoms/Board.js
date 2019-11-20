@@ -33,9 +33,10 @@ class Board {
     getAtoms(xy) {
         return this._data[xy.x][xy.y].atoms;
     }
+    
     addAtom(xy, player) {
         this._addAndCheck(xy, player);
-        if (this.isOver()) {
+        if (Game.isOver()) {
             this.onTurnDone(this._scores);
         }
         else if (this._criticals.length > 0) {
@@ -45,10 +46,7 @@ class Board {
             this.onTurnDone(this._scores);
         }
     }
-    isOver() {
-        return (Math.max.apply(Math, this._scores) == Game.SIZE * Game.SIZE);
-    }
-
+    
     _explode() {
         var explodingCell = this._criticals.shift();
         var xy = explodingCell;
@@ -62,7 +60,7 @@ class Board {
         neighbours.forEach(element => {
             this._addAndCheck(element, cell.player);
         });
-        if (this.isOver(this._scores)) {
+        if (Game.isOver(this._scores)) {
             this.onTurnDone(this._scores);
         }
         else if (this._criticals.length > 0) {
