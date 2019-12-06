@@ -1,5 +1,4 @@
 <!DOCTYPE html>
-
 <html>
     <head>
         <meta charset="UTF-8">
@@ -8,51 +7,25 @@
         </title>
     </head>
     <body>
-            <script src="https://apis.google.com/js/api.js"></script>
-            <script src="https://apis.google.com/js/client.js?onload=loadClient"></script>
+        <script src="https://apis.google.com/js/api.js"></script>
+        <script src="./const.js"></script>
+        <script src="./index.js"></script>
 
-            <script>
-                const apiKey = "AIzaSyA1D2n1DG47vxWUnNXiQhTUsTrNHhWnwSo";
-                const engineID = "004132308609793964196:z3trzmtyfa9";
-                let clientLoaded = false;
-                
-                // Make sure the client is loaded before calling this method.
-                function execute() {
-                    
-                    let clientLoaded = new Promise(function(resolve, regect) {
-                        loadClient()
-                    });
-                
-                    clientLoaded.then(function() {
-                       return gapi.client.search.cse.list({
-                    "q": document.getElementById("queryTXT").value,
-                    "cx": engineID
-                    })
-                    .then(function(response) {
-                            // Handle the results here (response.result has the parsed body).
-                            console.log("Response", response);
-                        },
-                        function(err) { console.error("Execute error", err); }); });
-                
-                
-                    
-                
-            }
-                function loadClient() {
-                    gapi.client.setApiKey(apiKey);
-                    return gapi.client.load("https://content.googleapis.com/discovery/v1/apis/customsearch/v1/rest")
-                        .then(function() { console.log("GAPI client loaded for API"); },
-                            function(err) { console.error("Error loading GAPI client for API", err); });
-                }
-                
-                gapi.load("client");
-                
-            </script>            
+        <form>
+            <input type="text" id = "queryTXT">
+            
+            <input type="button" onclick="searchAndDisplay(
+                API_KEY, API_URL, ENGINE_ID, QUERY_ELEMENT, CONTENT_ELEMENT
+                )" value="Google search">
 
-            <form>
-                <input type="text" id = "queryTXT">
-                <input type = "submit" value="Load search google" onclick="loadClient()">
-                <input type = "submit" value="Search in google" onclick="execute()">
-            </form>
+            <input type="button" id="saveButton" onclick="saveSearchResult(QUERY_ELEMENT)" value="Save result">
+        
+        </form>
+
+        <script>
+            window.onload = init(SAVE_ELEMENT);
+        </script>
+
+        <div id="result"></div>
     </body>
 </html>

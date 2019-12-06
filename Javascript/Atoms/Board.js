@@ -36,14 +36,15 @@ class Board {
     
     addAtom(xy, player) {
         this._addAndCheck(xy, player);
-        if (Game.isOver()) {
-            this.onTurnDone(this._scores);
+
+        if (Game.isOver(this._scores)) {
+            this.onTurnDone();
         }
         else if (this._criticals.length > 0) {
             this._explode();
         }
         else {
-            this.onTurnDone(this._scores);
+            this.onTurnDone();
         }
     }
     
@@ -56,18 +57,26 @@ class Board {
         if (cell.atoms < 0) {
             debugger;
         }
-        this._draw._cell(xy, this.getAtoms(xy), cell.player);
+
+        if (this._draw) {
+            this._draw._cell(xy, this.getAtoms(xy), cell.player);    
+        }
+        
         neighbours.forEach(element => {
             this._addAndCheck(element, cell.player);
         });
+
         if (Game.isOver(this._scores)) {
-            this.onTurnDone(this._scores);
+            this.onTurnDone();
         }
-        else if (this._criticals.length > 0) {
+        else if (this._criticals.length > 0 && this._draw) {
             setTimeout(this._explode.bind(this), this.DELAY);
         }
+        else if (this._criticals.length > 0) {
+            this._explode();
+        }
         else {
-            this.onTurnDone(this._scores);
+            this.onTurnDone();
         }
     }
     _addAndCheck(xy, player) {
@@ -79,14 +88,20 @@ class Board {
         var playerIndex = this._players.indexOf(player);
         this._scores[playerIndex]++;
         cell.atoms += 1;
+
         cell.player = player;
-        this._draw._cell(xy, this.getAtoms(xy), player);
+        
+        if (this._draw) {
+            this._draw._cell(xy, this.getAtoms(xy), player);    
+        }
+        
         if (cell.atoms > cell.limit) {
             for (let i = 0; i < this._criticals.length; i++) {
-                var critX = this._criticals[i][0];
-                var critY = this._criticals[i][1];
-                if (critX == xy.x && critY == xy.y)
+                var critXY = this._criticals[i];
+                
+                if (critXY.x == xy.x && critXY.y == xy.y){
                     return;
+                }
             }
             this._criticals.push(xy);
         }
@@ -100,6 +115,30 @@ class Board {
             limit--;
         }
         return limit;
+    }
+
+    clone(){
+        var boardClone = new Board(null, this._players);
+
+        boardClone._scores = this._scores.slice(0);
+
+        for (let i = 0; i < Game.SIZE; i++) {
+            for (let j = 0; j < Game.SIZE; j++) {
+                var xy = new XY(i,j);
+                var cell = this._data[xy.x][xy.y];
+                var cellClone = boardClone._data[xy.x][xy.y];
+
+                cellClone.player = cell.player;
+                cellClone.atoms = cell.atoms;
+            }          
+        }
+
+        return boardClone;
+    }
+
+    getScoreFor(player){
+        var index = this._players.indexOf(player);
+        return this._scores[index];
     }
 }
 

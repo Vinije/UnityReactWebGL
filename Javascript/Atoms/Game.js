@@ -27,10 +27,15 @@ class Game {
             this._askPlayer();
         }
     }
-    _turnDone(scores) {
+    _turnDone() {
+        var scores = [];
+
         for (let i = 0; i < this._players.length; i++) {
-            this._players[i].setScore(scores[i]);
+            let score = this._board.getScoreFor(this._players[i]);
+            this._players[i].setScore(score);
+            scores.push(score);
         }
+
         this._currentPlayer = (this._currentPlayer + 1) % this._players.length;
         if (!Game.isOver(scores)) {
             this._askPlayer();
@@ -40,7 +45,7 @@ class Game {
     }
 }
 
-Game.SIZE = 3;
+Game.SIZE = 6;
 
 Game.isOver = function(scores){
     return (Math.max.apply(Math, scores) == Game.SIZE * Game.SIZE);

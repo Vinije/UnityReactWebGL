@@ -28,6 +28,11 @@ class Draw {
         }
         document.body.appendChild(canvas);
     }
+
+    disableCanvas(){
+        this._context.canvas.globalAlpha = 0.5;
+    }
+
     // // Draw.all = function(){
     //     this._cells();
     // };
